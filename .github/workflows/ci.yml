@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    runs-on: [self-hosted, runner]
+    runs-on: [self-hosted, runner1]
     name: Test on EC2
     steps:
       - name: Checkout code
@@ -26,7 +26,7 @@ jobs:
 
   sonar_analysis:
     needs: test
-    runs-on: [self-hosted, runner]
+    runs-on: [self-hosted, runner1]
     name: SonarQube Analysis
     steps:
       - name: Checkout code
