@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline for Java Project
 
 on:
   push:
@@ -7,26 +7,26 @@ on:
 
 jobs:
   test:
-    runs-on: [self-hosted, runner1]
+    runs-on: [self-hosted, runner]
     name: Test on EC2
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v2
         with:
-          node-version: '14'
+          java-version: '11'
 
       - name: Install dependencies
-        run: npm install
+        run: ./mvnw install
 
       - name: Run tests
-        run: npm test
+        run: ./mvnw test
 
   sonar_analysis:
     needs: test
-    runs-on: [self-hosted, runner1]
+    runs-on: [self-hosted, runner]
     name: SonarQube Analysis
     steps:
       - name: Checkout code
@@ -41,34 +41,31 @@ jobs:
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
-        run: |
-          # Install SonarQube Scanner
-          npm install -g sonarqube-scanner
-          # Run SonarQube Scanner
-          sonar-scanner \
-            -Dsonar.projectKey=my_project_key \
-            -Dsonar.sources=. \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ secrets.SONAR_LOGIN }}
+        run: ./mvnw sonar:sonar -Dsonar.projectKey=my_project_key -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} -Dsonar.login=${{ secrets.SONAR_LOGIN }}
 
   deploy:
     needs: sonar_analysis
-    runs-on: [self-hosted, runner1]
+    runs-on: [self-hosted, runner]
     environment: production
-    name: Deploy to Production
+    name: Deploy to EC2
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.7.0
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy to S3
-        run: aws s3 sync . s3://my-production-bucket --delete
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ec2-user@54.224.225.171 << 'EOF'
+            cd /path/to/your/application
+            git pull origin main
+            ./mvnw clean package
+            ./mvnw deploy
+            sudo systemctl restart your-service-name
+          EOF
 
       - name: Notify deployment
-        run: echo "Deployment to production environment successful!"
+        run: echo "Deployment to EC2 environment successful!"
