@@ -16,10 +16,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up JDK 8
+      - name: Set up JDK 11
         uses: actions/setup-java@v2
         with:
-          java-version: '8'
+          java-version: '11'
 
       - name: Cache SonarQube packages
         uses: actions/cache@v2
@@ -41,7 +41,7 @@ jobs:
           SONAR_HOST_URL: http://54.167.1.242:9000/
         run: |
           sonar-scanner \
-          -Dsonar.projectKey=your_project_key \
+          -Dsonar.projectKey=githubactions \
           -Dsonar.sources=. \
           -Dsonar.host.url=$SONAR_HOST_URL \
           -Dsonar.login=$SONAR_TOKEN
