@@ -22,18 +22,3 @@ jobs:
           distribution: 'temurin'  # or 'adopt', 'zulu', etc.
           java-version: '11'
 
-      - name: Cache SonarQube packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar-${{ hashFiles('**/build.gradle') }}
-          restore-keys: |
-            ${{ runner.os }}-sonar-
-
-      - name: Install SonarQube scanner
-        run: |
-          curl -sSLo sonarscanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
-          unzip sonarscanner.zip -d $HOME
-          export PATH=$HOME/sonar-scanner-4.6.2.2472-linux/bin:$PATH
-
-      - name: Run
